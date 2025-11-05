@@ -98,7 +98,7 @@ module bmi_sac_module
 
   ! Exchange items
   integer, parameter :: input_item_count = 3
-  integer, parameter :: output_item_count = 11
+  integer, parameter :: output_item_count = 12
   character (len=BMI_MAX_VAR_NAME), target, &
        dimension(input_item_count) :: input_items
   character (len=BMI_MAX_VAR_NAME), target, &
@@ -167,6 +167,7 @@ contains
     output_items(9) = 'bfs'     ! channel baseflow component (mm)
     output_items(10) = 'bfp'    ! channel baseflow component (mm)
     output_items(11) = 'bfncc'  ! non-channel baseflow component (mm)
+    output_items(12) = 'mass_balance'  ! cumulative mass balance error (mm)
 
     names => output_items
     bmi_status = BMI_SUCCESS
@@ -306,7 +307,7 @@ contains
     select case(name)
     case('tair', 'precip', 'pet', &                  ! input vars
          'qs', 'qg', 'tci', 'eta',  &                ! output vars
-         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc')
+         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc', 'mass_balance')
        grid = 0
        bmi_status = BMI_SUCCESS
     case('uztwm', 'uzfwm', 'lztwm', 'lzfsm',  'hru_area', &     ! calibratable parameters
@@ -583,7 +584,7 @@ contains
     select case(name)
     case('tair', 'precip', 'pet',  &                ! input vars
          'qs', 'qg', 'tci', 'eta', &                ! output vars
-         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc')
+         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc', 'mass_balance')
        type = "double"
        bmi_status = BMI_SUCCESS
     case('uztwm', 'uzfwm', 'lztwm', 'lzfsm',  'hru_area', &     ! calibratable parameters
@@ -663,6 +664,9 @@ contains
        units = "mm"
        bmi_status = BMI_SUCCESS
     case("bfncc")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("mass_balance")
        units = "mm"
        bmi_status = BMI_SUCCESS
     ! calibratable parameters
@@ -771,6 +775,9 @@ contains
        bmi_status = BMI_SUCCESS
     case("bfncc")
        size = sizeof(this%model%modelvar%bfncc(1))
+       bmi_status = BMI_SUCCESS
+    case("mass_balance")
+       size = sizeof(this%model%derived%mass_balance(1))
        bmi_status = BMI_SUCCESS
     ! calibratable parameters
     case("uztwm")
@@ -952,6 +959,9 @@ contains
        bmi_status = BMI_SUCCESS
     case("bfncc")
        dest(1) = this%model%modelvar%bfncc(1)
+       bmi_status = BMI_SUCCESS
+    case("mass_balance")
+       dest(1) = this%model%derived%mass_balance(1)
        bmi_status = BMI_SUCCESS
     case default
        dest(:) = -1.d0
