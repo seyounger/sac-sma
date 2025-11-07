@@ -298,7 +298,7 @@ contains
       write(*,'("Problem opening file ''", A, "''")') trim(filename)
       stop ":  ERROR EXIT"
     endif
-    write(runinfo%output_fileunits(1),'(A)') 'year mo dy hr tair precip pet qs qg tci eta roimp sdro ssur sif bfs bfp bfncc'   ! header
+    write(runinfo%output_fileunits(1),'(A)') 'year mo dy hr tair precip pet qs qg tci eta roimp sdro ssur sif bfs bfp bfncc mass_balance'   ! header
 
     ! if user setting is to write out information for each snowband, open the individual files
     if (namelist%output_hrus == 1) then
@@ -315,7 +315,7 @@ contains
         endif
       
         ! Write 1-line header
-        write(runinfo%output_fileunits(nh+1),'(A)') 'year mo dy hr tair precip pet qs qg tci eta roimp sdro ssur sif bfs bfp bfncc'
+        write(runinfo%output_fileunits(nh+1),'(A)') 'year mo dy hr tair precip pet qs qg tci eta roimp sdro ssur sif bfs bfp bfncc mass_balance'
         
       end do  ! end loop over sub-units
       
@@ -486,7 +486,7 @@ contains
     ! ==== WRITE output for current area simulation ====
     ! Note:  write order should match header written by open_and_init_output_files()
     
-    32 FORMAT(I4.4, 3(1x,I2.2), 20(F16.10))
+    32 FORMAT(I4.4, 3(1x,I2.2), 20(F40.32))
 
     ! if user setting is to write out information for each snowband, open the individual files
     if (namelist%output_hrus == 1 .and. runinfo%n_hrus > 1) then
@@ -495,7 +495,7 @@ contains
             modelvar%qs(n_curr_hru), modelvar%qg(n_curr_hru), modelvar%tci(n_curr_hru), & 
             modelvar%eta(n_curr_hru), modelvar%roimp(n_curr_hru), modelvar%sdro(n_curr_hru), &
             modelvar%ssur(n_curr_hru), modelvar%sif(n_curr_hru), modelvar%bfs(n_curr_hru), &
-            modelvar%bfp(n_curr_hru), modelvar%bfncc(n_curr_hru)
+            modelvar%bfp(n_curr_hru), modelvar%bfncc(n_curr_hru), derived%mass_balance(n_curr_hru)
       if(ierr /= 0) then
         print*, 'ERROR writing output information for basin average'; stop
       endif            
@@ -518,6 +518,7 @@ contains
     derived%bfs_comb       = 0.0
     derived%bfp_comb       = 0.0
     derived%bfncc_comb     = 0.0
+    derived%mass_balance_comb = 0.0
         
     if (n_curr_hru .eq. runinfo%n_hrus) then 
       do nh=1, runinfo%n_hrus
@@ -535,6 +536,7 @@ contains
         derived%bfs_comb         = derived%bfs_comb + modelvar%bfs(nh) * parameters%hru_area(nh)
         derived%bfp_comb         = derived%bfp_comb + modelvar%bfp(nh) * parameters%hru_area(nh)
         derived%bfncc_comb       = derived%bfncc_comb + modelvar%bfncc(nh) * parameters%hru_area(nh)
+        derived%mass_balance_comb = derived%mass_balance_comb + derived%mass_balance(nh) * parameters%hru_area(nh)
       end do
 
       ! take average of weighted sum of HRU areas
@@ -552,13 +554,14 @@ contains
       derived%bfs_comb         = derived%bfs_comb / parameters%total_area
       derived%bfp_comb         = derived%bfp_comb / parameters%total_area
       derived%bfncc_comb       = derived%bfncc_comb / parameters%total_area
+      derived%mass_balance_comb = derived%mass_balance_comb / parameters%total_area
 
       ! -- write out combined file that is similar to each area file, but add flow variable in CFS units
       write(runinfo%output_fileunits(1), 32, iostat=ierr) runinfo%curr_yr, runinfo%curr_mo, runinfo%curr_dy, runinfo%curr_hr, &
             derived%tair_comb, derived%precip_comb, derived%pet_comb, &
             derived%qs_comb, derived%qg_comb, derived%tci_comb,derived%eta_comb, &
             derived%roimp_comb, derived%sdro_comb, derived%ssur_comb, &
-            derived%sif_comb, derived%bfs_comb, derived%bfp_comb, derived%bfncc_comb
+            derived%sif_comb, derived%bfs_comb, derived%bfp_comb, derived%bfncc_comb, derived%mass_balance_comb
       if(ierr /= 0) then
         print*, 'ERROR writing output information for sub-unit ', n_curr_hru; stop
       endif
