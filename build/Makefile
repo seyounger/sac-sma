@@ -72,7 +72,7 @@ endif
 sac = \
 		duamel.f \
 		ex_sac1.f \
-		sac1.f 
+		sac1.f
 		
 model_sac = $(patsubst %, $(sac_dir)/%, $(sac))
 
