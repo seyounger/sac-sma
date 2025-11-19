@@ -28,7 +28,8 @@ SUBROUTINE EXSAC(NSOLD, DTM, PCP, TMP, ETP, &
 
   ! ----- LOCAL VARIABLES (Converted to DOUBLE PRECISION) -----
   DOUBLE PRECISION :: TOTAL_S1, TOTAL_S2, TOTAL_S1_1, TOTAL_S2_1
-  DOUBLE PRECISION :: DT, DS, DS_1, BAL, BAL_1, EP1, P1, TCI
+  DOUBLE PRECISION :: DT, DS, DS_1, BAL, BAL_1, BAL2, EP1, P1, TCI
+  DOUBLE PRECISION :: DS_pervious, DS_ADIMC, ADIMC_0
   DOUBLE PRECISION :: TA, LWE, WE, ISC, AESC  ! Dummy frozen ground arguments
   INTEGER  :: IFRZE
   
@@ -37,6 +38,7 @@ SUBROUTINE EXSAC(NSOLD, DTM, PCP, TMP, ETP, &
   ! Compute total initial storage (uses arguments)
   TOTAL_S1 = UZTWC + UZFWC + LZTWC + LZFSC + LZFPC + ADIMC
   TOTAL_S1_1 = UZTWC + UZFWC + LZTWC + LZFSC + LZFPC
+  ADIMC_0 = ADIMC
   
   ! Compute surface moisture fluxes
   DT = DTM / 86400.0_dp
@@ -65,5 +67,14 @@ SUBROUTINE EXSAC(NSOLD, DTM, PCP, TMP, ETP, &
   DS_1 = TOTAL_S1_1 - TOTAL_S2_1
   BAL_1 = P1 - ETA - TCI - DS
   BAL = P1 - ETA - QS - QG - DS
+  
+  ! BAL2: Per-timestep calculation matching mass_balance in runSac.f90
+  ! This uses area-weighted storage changes like the cumulative mass_balance
+  DS_pervious = TOTAL_S2_1 - TOTAL_S1_1
+  DS_ADIMC = ADIMC - ADIMC_0
+  BAL2 = P1 - ETA - TCI - (DS_pervious * (1.0_dp - ADIMP - PCTIM)) - (DS_ADIMC * ADIMP) - BFNCC
+  
+  ! Print water balance diagnostics
+  print*, 'BAL = ', BAL, '  BAL2 = ', BAL2
   
 END SUBROUTINE EXSAC
