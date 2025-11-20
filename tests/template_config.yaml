@@ -1,0 +1,25 @@
+# Configuration template for SAC-SMA automated testing framework
+# Copy this file to config.yaml and customize for your test runs
+
+# Template test case data and configs to use as input
+# This should be the name of a directory in test_cases/ containing
+# the required subdirectories:
+#   run/namelist.bmi.* (model configuration)
+#   input/forcing/*.csv (forcing data)
+#   input/params/*.txt (parameter file)
+template_case: ex1
+
+# List of branches to test
+# Each branch will be checked out, built, and run with the template data
+# Results will be saved to test_cases/{template_case}_{branch_name}/
+branches:
+  - branch-name-1
+  - branch-name-2
+  - branch-name-3
+  
+# Optional: Custom plot titles for branches
+# If not specified, the branch name will be used
+plot_titles:
+  branch-name-1: "Custom Title 1"
+  branch-name-2: "Custom Title 2"
+  branch-name-3: "Custom Title 3"

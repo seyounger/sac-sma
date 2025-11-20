@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated plots and visualizations
+plots/
+
+# Virtual environment
+.venv/
+venv/
+
+# User-specific test configuration (use config.yaml.template as base)
+config.yaml
