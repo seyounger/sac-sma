@@ -214,6 +214,7 @@ IMPLICIT NONE
     END IF
     
     SBF = SBF + BF
+    SPBF = SPBF + BF
 
     ! Baseflow from free water supplemental storage
     BF = LZFSC * DLZS
