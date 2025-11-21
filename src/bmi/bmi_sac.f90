@@ -98,7 +98,7 @@ module bmi_sac_module
 
   ! Exchange items
   integer, parameter :: input_item_count = 3
-  integer, parameter :: output_item_count = 11
+  integer, parameter :: output_item_count = 12
   character (len=BMI_MAX_VAR_NAME), target, &
        dimension(input_item_count) :: input_items
   character (len=BMI_MAX_VAR_NAME), target, &
@@ -158,7 +158,7 @@ contains
 
     output_items(1) = 'qs'      ! runoff from direct runoff, impervious runoff, surface runoff, and interflow (mm)
     output_items(2) = 'qg'      ! baseflow (mm)
-    output_items(3) = 'tci'     ! total channel inflow from upstream (mm)
+    output_items(3) = 'tci'     ! total channel inflow from upstream (m)
     output_items(4) = 'eta'     ! actual evapotranspiration (mm) 
     output_items(5) = 'roimp'   ! impervious area runoff (mm)
     output_items(6) = 'sdro'    ! direct runoff (mm)
@@ -167,6 +167,7 @@ contains
     output_items(9) = 'bfs'     ! channel baseflow component (mm)
     output_items(10) = 'bfp'    ! channel baseflow component (mm)
     output_items(11) = 'bfncc'  ! non-channel baseflow component (mm)
+    output_items(12) = 'mass_balance'  ! cumulative mass balance error (mm)
 
     names => output_items
     bmi_status = BMI_SUCCESS
@@ -306,7 +307,12 @@ contains
     select case(name)
     case('tair', 'precip', 'pet', &                  ! input vars
          'qs', 'qg', 'tci', 'eta',  &                ! output vars
-         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc')
+         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc', 'mass_balance')
+       grid = 0
+       bmi_status = BMI_SUCCESS
+    case('uztwm', 'uzfwm', 'lztwm', 'lzfsm',  'hru_area', &     ! calibratable parameters
+         'lzfpm', 'adimp', 'uzk', 'lzpk', 'lzsk', 'zperc',  &
+         'rexp', 'pctim', 'pfree', 'riva', 'side', 'rserv')
        grid = 0
        bmi_status = BMI_SUCCESS
     case default
@@ -578,8 +584,13 @@ contains
     select case(name)
     case('tair', 'precip', 'pet',  &                ! input vars
          'qs', 'qg', 'tci', 'eta', &                ! output vars
-         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc')
-       type = "real"
+         'roimp','sdro','ssur','sif','bfs','bfp', 'bfncc', 'mass_balance')
+       type = "double"
+       bmi_status = BMI_SUCCESS
+    case('uztwm', 'uzfwm', 'lztwm', 'lzfsm',  'hru_area', &     ! calibratable parameters
+         'lzfpm', 'adimp', 'uzk', 'lzpk', 'lzsk', 'zperc',  &
+         'rexp', 'pctim', 'pfree', 'riva', 'side', 'rserv')
+       type = "double"
        bmi_status = BMI_SUCCESS
     case default
        type = "-"
@@ -611,7 +622,7 @@ contains
        units = "mm"
        bmi_status = BMI_SUCCESS
     case("tci")
-       units = "mm"
+       units = "m"
        bmi_status = BMI_SUCCESS
     case("eta")
        units = "mm"
@@ -653,6 +664,58 @@ contains
        units = "mm"
        bmi_status = BMI_SUCCESS
     case("bfncc")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("mass_balance")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    ! calibratable parameters
+    case("uztwm")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("uzfwm")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("lztwm")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("lzfsm")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("lzfpm")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("adimp")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("uzk")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("lzpk")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("lzsk")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("zperc")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("rexp")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("pctim")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("pfree")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("riva")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("side")
+       units = "mm"
+       bmi_status = BMI_SUCCESS
+    case("rserv")
        units = "mm"
        bmi_status = BMI_SUCCESS
     case default
@@ -712,6 +775,61 @@ contains
        bmi_status = BMI_SUCCESS
     case("bfncc")
        size = sizeof(this%model%modelvar%bfncc(1))
+       bmi_status = BMI_SUCCESS
+    case("mass_balance")
+       size = sizeof(this%model%derived%mass_balance(1))
+       bmi_status = BMI_SUCCESS
+    ! calibratable parameters
+    case("uztwm")
+       size = sizeof(this%model%parameters%uztwm(1))
+       bmi_status = BMI_SUCCESS
+    case("uzfwm")
+       size = sizeof(this%model%parameters%uzfwm(1))
+       bmi_status = BMI_SUCCESS
+    case("lztwm")
+       size = sizeof(this%model%parameters%lztwm(1))
+       bmi_status = BMI_SUCCESS
+    case("lzfsm")
+       size = sizeof(this%model%parameters%lzfsm(1))
+       bmi_status = BMI_SUCCESS
+    case("lzfpm")
+       size = sizeof(this%model%parameters%lzfpm(1))
+       bmi_status = BMI_SUCCESS
+    case("adimp")
+       size = sizeof(this%model%parameters%adimp(1))
+       bmi_status = BMI_SUCCESS
+    case("uzk")
+       size = sizeof(this%model%parameters%uzk(1))
+       bmi_status = BMI_SUCCESS
+    case("lzpk")
+       size = sizeof(this%model%parameters%lzpk(1))
+       bmi_status = BMI_SUCCESS
+    case("lzsk")
+       size = sizeof(this%model%parameters%lzsk(1))
+       bmi_status = BMI_SUCCESS
+    case("zperc")
+       size = sizeof(this%model%parameters%zperc(1))
+       bmi_status = BMI_SUCCESS
+    case("rexp")
+       size = sizeof(this%model%parameters%rexp(1))
+       bmi_status = BMI_SUCCESS
+    case("pctim")
+       size = sizeof(this%model%parameters%pctim(1))
+       bmi_status = BMI_SUCCESS
+    case("pfree")
+       size = sizeof(this%model%parameters%pfree(1))
+       bmi_status = BMI_SUCCESS
+    case("riva")
+       size = sizeof(this%model%parameters%riva(1))
+       bmi_status = BMI_SUCCESS
+    case("side")
+       size = sizeof(this%model%parameters%side(1))
+       bmi_status = BMI_SUCCESS
+    case("rserv")
+       size = sizeof(this%model%parameters%rserv(1))
+       bmi_status = BMI_SUCCESS
+    case("hru_area")
+       size = sizeof(this%model%parameters%hru_area(1))
        bmi_status = BMI_SUCCESS
     case default
        size = -1
@@ -780,6 +898,24 @@ contains
     integer :: bmi_status
 
     select case(name)
+    case default
+       dest(:) = -1.0
+       bmi_status = BMI_FAILURE
+    end select
+    ! NOTE, if vars are gridded, then use:
+    ! dest = reshape(this%model%temperature, [this%model%n_x*this%model%n_y]) 
+  end function sac_get_float
+
+  ! Get a copy of a double variable's values, flattened.
+  function sac_get_double(this, name, dest) result (bmi_status)
+    class (bmi_sac), intent(in) :: this
+    character (len=*), intent(in) :: name
+    double precision, intent(inout) :: dest(:)
+    integer :: bmi_status
+
+    !==================== UPDATE IMPLEMENTATION IF NECESSARY FOR DOUBLE VARS =================
+
+    select case(name)
     case("precip")
        dest(1) = this%model%forcing%precip(1)
 !       dest(1) = this%model%derived%precip_comb
@@ -798,7 +934,7 @@ contains
        dest(1) = this%model%modelvar%qg(1)
        bmi_status = BMI_SUCCESS
     case("tci")
-       dest(1) = this%model%modelvar%tci(1)
+       dest(1) = this%model%modelvar%tci(1)/1000.0 !convert mm to m
        bmi_status = BMI_SUCCESS
     case("eta")
        dest(1) = this%model%modelvar%eta(1)
@@ -824,24 +960,9 @@ contains
     case("bfncc")
        dest(1) = this%model%modelvar%bfncc(1)
        bmi_status = BMI_SUCCESS
-    case default
-       dest(:) = -1.0
-       bmi_status = BMI_FAILURE
-    end select
-    ! NOTE, if vars are gridded, then use:
-    ! dest = reshape(this%model%temperature, [this%model%n_x*this%model%n_y]) 
-  end function sac_get_float
-
-  ! Get a copy of a double variable's values, flattened.
-  function sac_get_double(this, name, dest) result (bmi_status)
-    class (bmi_sac), intent(in) :: this
-    character (len=*), intent(in) :: name
-    double precision, intent(inout) :: dest(:)
-    integer :: bmi_status
-
-    !==================== UPDATE IMPLEMENTATION IF NECESSARY FOR DOUBLE VARS =================
-
-    select case(name)
+    case("mass_balance")
+       dest(1) = this%model%derived%mass_balance(1)
+       bmi_status = BMI_SUCCESS
     case default
        dest(:) = -1.d0
        bmi_status = BMI_FAILURE
@@ -979,6 +1100,23 @@ contains
     integer :: bmi_status
 
     select case(name)
+    case default
+       bmi_status = BMI_FAILURE
+    end select
+    ! NOTE, if vars are gridded, then use:
+    ! this%model%temperature = reshape(src, [this%model%n_y, this%model%n_x])
+  end function sac_set_float
+
+  ! Set new double values.
+  function sac_set_double(this, name, src) result (bmi_status)
+    class (bmi_sac), intent(inout) :: this
+    character (len=*), intent(in) :: name
+    double precision, intent(in) :: src(:)
+    integer :: bmi_status
+
+    !==================== UPDATE IMPLEMENTATION IF NECESSARY FOR DOUBLE VARS =================
+
+    select case(name)
     case("precip")
        this%model%forcing%precip(1) = src(1)
 !       this%model%derived%precip_comb = src(1)
@@ -1023,23 +1161,58 @@ contains
     case("bfncc")
        this%model%modelvar%bfncc(1) = src(1)
        bmi_status = BMI_SUCCESS
-    case default
-       bmi_status = BMI_FAILURE
-    end select
-    ! NOTE, if vars are gridded, then use:
-    ! this%model%temperature = reshape(src, [this%model%n_y, this%model%n_x])
-  end function sac_set_float
-
-  ! Set new double values.
-  function sac_set_double(this, name, src) result (bmi_status)
-    class (bmi_sac), intent(inout) :: this
-    character (len=*), intent(in) :: name
-    double precision, intent(in) :: src(:)
-    integer :: bmi_status
-
-    !==================== UPDATE IMPLEMENTATION IF NECESSARY FOR DOUBLE VARS =================
-
-    select case(name)
+    ! calibratable parameters
+    case("uztwm")
+       this%model%parameters%uztwm(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("uzfwm")
+       this%model%parameters%uzfwm(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("lztwm")
+       this%model%parameters%lztwm(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("lzfsm")
+       this%model%parameters%lzfsm(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("lzfpm")
+       this%model%parameters%lzfpm(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("adimp")
+       this%model%parameters%adimp(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("uzk")
+       this%model%parameters%uzk(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("lzpk")
+       this%model%parameters%lzpk(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("lzsk")
+       this%model%parameters%lzsk(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("zperc")
+       this%model%parameters%zperc(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("rexp")
+       this%model%parameters%rexp(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("pctim")
+       this%model%parameters%pctim(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("pfree")
+       this%model%parameters%pfree(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("riva")
+       this%model%parameters%riva(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("side")
+       this%model%parameters%side(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("rserv")
+       this%model%parameters%rserv(1) = src(1)
+       bmi_status = BMI_SUCCESS
+    case("hru_area")
+       this%model%parameters%hru_area(1) = src(1)
+       bmi_status = BMI_SUCCESS
     case default
        bmi_status = BMI_FAILURE
     end select
