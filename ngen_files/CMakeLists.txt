@@ -5,10 +5,17 @@ add_subdirectory(../iso_c_fortran_bmi ${CMAKE_BINARY_DIR}/iso_c_bmi)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../cmake/")
 # Uncomment this and rebuild artifacts to enable debugging
 #set(CMAKE_BUILD_TYPE Debug)
-add_compile_options(
-  "-Wall"
-  "$<$<CONFIG:DEBUG>:-g;-fbacktrace;-fbounds-check>"
-)
+
+# Compiler-specific base flags
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  add_compile_options(-Wall)
+  add_compile_options("$<$<CONFIG:DEBUG>:-g;-fbacktrace;-fbounds-check>")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel|IntelLLVM")
+  add_compile_options("$<$<CONFIG:DEBUG>:-g;-traceback;-check;all>")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC")
+  add_compile_options("$<$<CONFIG:DEBUG>:-g;-traceback>")
+endif()
+
 project(sac-sma VERSION 1.0.0 DESCRIPTION "External BMI Models Shared Libraries")
 
 set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran)
@@ -73,8 +80,40 @@ endif()
 #netcdf not needed
 #target_include_directories(surfacebmi PUBLIC ${netCDF_INCLUDE_DIR} ${netCDF_MOD_PATH})
 #We know we are building this for NGEN support, so define the preprocessor directive in the compile options
-#Not sure why the global 
-target_compile_options(sacbmi PUBLIC -cpp -ffree-line-length-none)
+
+# Apply preprocessing and line-length flags based on compiler
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(sacbmi PUBLIC -cpp -ffree-line-length-none)
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel|IntelLLVM")
+  target_compile_options(sacbmi PUBLIC -cpp)
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC")
+  target_compile_options(sacbmi PUBLIC -cpp)
+else()
+  # Fallback for other compilers
+  target_compile_options(sacbmi PUBLIC -cpp)
+endif()
+
+# Promote REAL to DOUBLE PRECISION (8 bytes) for legacy .f files only
+# Apply precision flags only to the SAC model source files, not BMI interface
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    set_source_files_properties(${MODEL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-fdefault-real-8 -fdefault-double-8 -fno-fast-math"
+    )
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set_source_files_properties(${MODEL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-real-size 64 -double-size 64 -fp-model strict"
+    )
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+    set_source_files_properties(${MODEL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-real-size 64 -double-size 64 -fp-model precise"
+    )
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC")
+    set_source_files_properties(${MODEL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-r8 -Kieee"
+    )
+else()
+    message(WARNING "Unknown Fortran compiler '${CMAKE_Fortran_COMPILER_ID}'. REAL precision may not be 8 bytes.")
+endif()
 
 ##### NETCDF #####
 #target_link_libraries( surfacebmi iso_c_bmi ${netCDF_C_LIB} ${netCDF_FORTRAN_LIB})
